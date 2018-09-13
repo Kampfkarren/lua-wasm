@@ -11,6 +11,7 @@ Reader.error = wasm.error
 
 function wasm.module(binary)
 	local module = {}
+	module.data = {}
 	module.entries = {}
 	module.exports = {}
 	module.exportsByName = {}
@@ -94,16 +95,17 @@ function wasm.module(binary)
 					_local.type = self:ReadValueType()
 					procBody.locals[#procBody.locals + 1] = _local
 				end
-				procBody.code = {}
-				while true do
-					local byte = reader:ReadByte()
-					if byte == Constants.FUNCTION_BODY_END then
-						break
-					end
-					procBody.code[#procBody.code + 1] = byte
-				end
-				procBody.code = Reader.new(procBody.code)
+				procBody.code = Reader.new(reader:ReadCode())
+				--procBody.code = Reader.new(procBody.code)
 				module.codeSections[index - 1] = procBody
+			end
+		elseif section.id == Constants.ModuleSections.DATA then
+			for index=1,reader:ReadVarUInt(32) do
+				local data = {}
+				reader:ReadVarUInt(32) -- index
+				data.offset = reader:ReadInitExpr()
+				data.data = reader:ReadBytes(reader:ReadVarUInt(32))
+				module.data[#module.data + 1] = data
 			end
 		else
 			wasm.error("INVALID_SECTION_ID", "Invalid section id: %d", section.id)
@@ -117,6 +119,12 @@ function wasm.instance(module, args)
 	local instance = {}
 	instance.exports = {}
 
+	local memoryOffsets = {}
+
+	for _,data in pairs(module.data) do
+		memoryOffsets[data.offset] = data.data
+	end
+
 	for exportName,export in pairs(module.exportsByName) do
 		if export.kind == Constants.ExternalKind.FUNCTION then
 			local exportId = export.index
@@ -128,7 +136,10 @@ function wasm.instance(module, args)
 
 				while not procBodyCode:IsFinished() do
 					local opcode = procBodyCode:ReadByte()
-					if opcode == Constants.Opcodes.I32Const then
+					if opcode == Constants.Opcodes.I32Load then
+						local memoryImmediate = procBodyCode:ReadMemoryImmediate()
+						stack[#stack + 1] = memoryOffsets[memoryImmediate.offset]
+					elseif opcode == Constants.Opcodes.I32Const then
 						local constant = procBodyCode:ReadVarUInt(32) --TODO: this is supposed to be varint, but it doesnt work unless its uint? at least with the 42 case
 						stack[#stack + 1] = constant
 					else

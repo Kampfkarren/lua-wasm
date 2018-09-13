@@ -14,12 +14,18 @@ Constants.ModuleSections.MEMORY = 5
 Constants.ModuleSections.GLOBAL = 6
 Constants.ModuleSections.EXPORT = 7
 Constants.ModuleSections.CODE = 10
+Constants.ModuleSections.DATA = 11
 
 Constants.ExternalKind = {}
 Constants.ExternalKind.FUNCTION = 0
 Constants.ExternalKind.MEMORY = 2
 
 Constants.Opcodes = {}
+Constants.Opcodes.End = 0x0B
+Constants.Opcodes.I32Load = 0x28
 Constants.Opcodes.I32Const = 0x41
+
+Constants.ConstantTypes = {}
+Constants.ConstantTypes.I32 = 0x41
 
 return Constants

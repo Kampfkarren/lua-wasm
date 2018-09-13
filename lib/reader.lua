@@ -144,6 +144,32 @@ function Reader:ReadValueType()
 	return self:ReadVarUInt(7)
 end
 
+function Reader:ReadCode()
+	local code = {}
+
+	while true do
+		local byte = self:ReadByte()
+		if byte == Constants.Opcodes.End then
+			break
+		end
+		code[#code + 1] = byte
+	end
+
+	return code
+end
+
+function Reader:ReadInitExpr()
+	local code = self:ReadCode()
+	return code[2] -- TODO: change when globals are added
+end
+
+function Reader:ReadMemoryImmediate()
+	local memoryImmediate = {}
+	memoryImmediate.flags = self:ReadVarUInt(32)
+	memoryImmediate.offset = self:ReadVarUInt(32)
+	return memoryImmediate
+end
+
 -- Util
 function Reader:IsFinished()
 	return self.cursor == #self.binary + 1
