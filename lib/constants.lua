@@ -25,6 +25,7 @@ Constants.Opcodes.End = 0x0B
 Constants.Opcodes.GetLocal = 0x20
 Constants.Opcodes.I32Load = 0x28
 Constants.Opcodes.I32Const = 0x41
+Constants.Opcodes.I32Eq = 0x46
 
 Constants.ConstantTypes = {}
 Constants.ConstantTypes.I32 = 0x41

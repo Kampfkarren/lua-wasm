@@ -133,7 +133,7 @@ function wasm.instance(module, args)
 				local entry = module.entries[exportId + 1]
 				local procBody = module.codeSections[exportId]
 				local procBodyCode = procBody.code
-				local stack = {} --i don't know if this is a stack, does it just return the last evaluated input?
+				local stack = {}
 				local locals = {}
 
 				local args = {...}
@@ -151,11 +151,14 @@ function wasm.instance(module, args)
 					elseif opcode == Constants.Opcodes.I32Const then
 						local constant = procBodyCode:ReadVarUInt(32) --TODO: this is supposed to be varint, but it doesnt work unless its uint? at least with the 42 case
 						stack[#stack + 1] = constant
+					elseif opcode == Constants.Opcodes.I32Eq then
+						local left, right = table.remove(stack), table.remove(stack)
+						stack[#stack + 1] = (left == right) and 1 or 0
 					else
 						wasm.error("UNKNOWN_OPCODE", "Unknown opcode %x", opcode)
 					end
 				end
-
+				
 				return table.remove(stack)
 			end
 		end
