@@ -92,10 +92,14 @@ function Reader:ReadFuncType()
 	local funcType = {}
 
 	funcType.form = self:ReadVarInt(7)
-	funcType.paramCount = self:ReadVarUInt(32)
-	-- TODO: read value type
+	funcType.parameters = {}
+	for _=1,self:ReadVarUInt(32) do
+		funcType.parameters[#funcType.parameters + 1] = self:ReadValueType()
+	end
 	funcType.returnCount = self:ReadVarUInt(1)
-	funcType.returnType = self:ReadVarUInt(7)
+	if funcType.returnCount > 0 then
+		funcType.returnType = self:ReadVarUInt(7)
+	end
 
 	return funcType
 end

@@ -130,13 +130,22 @@ function wasm.instance(module, args)
 			local exportId = export.index
 			-- make callable
 			instance.exports[exportName] = function(...)
+				local entry = module.entries[exportId + 1]
 				local procBody = module.codeSections[exportId]
 				local procBodyCode = procBody.code
-				local stack = {}
+				local stack = {} --i don't know if this is a stack, does it just return the last evaluated input?
+				local locals = {}
+
+				local args = {...}
+				for index=1,#entry.parameters do
+					locals[index - 1] = args[index]
+				end
 
 				while not procBodyCode:IsFinished() do
 					local opcode = procBodyCode:ReadByte()
-					if opcode == Constants.Opcodes.I32Load then
+					if opcode == Constants.Opcodes.GetLocal then
+						stack[#stack + 1] = locals[procBodyCode:ReadVarUInt(32)]
+					elseif opcode == Constants.Opcodes.I32Load then
 						local memoryImmediate = procBodyCode:ReadMemoryImmediate()
 						stack[#stack + 1] = memoryOffsets[memoryImmediate.offset]
 					elseif opcode == Constants.Opcodes.I32Const then

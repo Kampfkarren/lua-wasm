@@ -22,6 +22,7 @@ Constants.ExternalKind.MEMORY = 2
 
 Constants.Opcodes = {}
 Constants.Opcodes.End = 0x0B
+Constants.Opcodes.GetLocal = 0x20
 Constants.Opcodes.I32Load = 0x28
 Constants.Opcodes.I32Const = 0x41
 
