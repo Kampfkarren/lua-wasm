@@ -1,0 +1,2 @@
+#!/bin/bash
+busted -e "require('vendor.baste.src.baste').global()" lib spec "$@"

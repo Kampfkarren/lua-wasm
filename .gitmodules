@@ -1,0 +1,3 @@
+[submodule "vendor/baste"]
+	path = vendor/baste
+	url = https://github.com/LPGhatguy/baste

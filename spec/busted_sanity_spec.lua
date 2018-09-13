@@ -1,0 +1,5 @@
+describe("busted sanity", function()
+	it("should be sane", function()
+		assert.same(1, 1)
+	end)
+end)
