@@ -11,12 +11,12 @@ Reader.error = wasm.error
 
 function wasm.module(binary)
 	local module = {}
+	module.codeSections = {}
 	module.data = {}
-	module.entries = {}
 	module.exports = {}
 	module.exportsByName = {}
-	module.codeSections = {}
 	module.functions = {}
+	module.types = {}
 
 	local reader = Reader.new(binary)
 
@@ -46,18 +46,14 @@ function wasm.module(binary)
 		end
 
 		if section.id == Constants.ModuleSections.TYPE then
-			local count = reader:ReadVarUInt(32)
-			for _=1,count do
-				module.entries[#module.entries + 1] = reader:ReadFuncType()
+			for _=1,reader:ReadVarUInt(32) do
+				module.types[#module.types + 1] = reader:ReadFuncType()
 			end
 		elseif section.id == Constants.ModuleSections.FUNCTION then
 			local count = reader:ReadVarUInt(32)
-			local proc = {}
-			proc.types = {}
 			for _=1,count do
-				proc.types[#proc.types + 1] = reader:ReadVarUInt(32)
+				module.functions[#module.functions + 1] = reader:ReadVarUInt(32)
 			end
-			module.functions[#module.functions + 1] = proc
 		elseif section.id == Constants.ModuleSections.TABLE then
 			local count = reader:ReadVarUInt(32)
 			local entries = {}
@@ -130,14 +126,14 @@ function wasm.instance(module, args)
 			local exportId = export.index
 			-- make callable
 			instance.exports[exportName] = function(...)
-				local entry = module.entries[exportId + 1]
+				local _type = module.types[module.functions[exportId + 1] + 1]
 				local procBody = module.codeSections[exportId]
 				local procBodyCode = procBody.code
 				local stack = {}
 				local locals = {}
 
 				local args = {...}
-				for index=1,#entry.parameters do
+				for index=1,#_type.parameters do
 					locals[index - 1] = args[index]
 				end
 
@@ -154,11 +150,14 @@ function wasm.instance(module, args)
 					elseif opcode == Constants.Opcodes.I32Eq then
 						local left, right = table.remove(stack), table.remove(stack)
 						stack[#stack + 1] = (left == right) and 1 or 0
+					elseif opcode == Constants.Opcodes.I32Add then
+						local left, right = table.remove(stack), table.remove(stack)
+						stack[#stack + 1] = left + right
 					else
 						wasm.error("UNKNOWN_OPCODE", "Unknown opcode %x", opcode)
 					end
 				end
-				
+
 				return table.remove(stack)
 			end
 		end
